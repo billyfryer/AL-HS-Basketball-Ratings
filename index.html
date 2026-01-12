@@ -28,7 +28,7 @@
         
         /* Fixed Header Styling */
         th { 
-            background-color: #007bff; 
+            background-color: #ff0000; 
             color: white; 
             padding: 12px; 
             text-align: left; 
@@ -69,12 +69,9 @@
             <thead>
                 <tr>
                     <th>Logo</th>
-                    <th>ID</th>
                     <th>School Name</th>
                     <th>City</th>
-                    <th>State</th>
                     <th>Mascot</th>
-                    <th>Address</th>
                     <th>W</th>
                     <th>L</th>
                     <th>Win %</th>
@@ -115,12 +112,9 @@
             // We map every CSV column key to a table cell
             tr.innerHTML = `
                 <td><img src="${row.logo_url}" class="logo-img" onerror="this.src='https://via.placeholder.com/35?text=?'"></td>
-                <td>${row.school_id}</td>
                 <td><strong>${row.school_name}</strong></td>
                 <td>${row.city}</td>
-                <td>${row.state}</td>
                 <td>${row.mascot || '—'}</td>
-                <td>${row.address || '—'}</td>
                 <td>${row.W}</td>
                 <td>${row.L}</td>
                 <td>${(row.win_pct * 100).toFixed(1)}%</td>
