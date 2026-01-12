@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alabama High School Basketball RPI Rankings</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        canvas { margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Top 10 Schools by RPI</h1>
+    <p>Last Updated: <span id="last-updated"></span></p>
+    
+    <canvas id="rpiChart"></canvas>
+
+    <h2>Full Rankings</h2>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Logo</th> <th>School</th>
+                <th>City</th>
+                <th>W-L</th>
+                <th>Win %</th>
+                <th>RPI</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const csvUrl = 'mbb_rpi.csv';
+
+    // 1. Fetch and Parse CSV
+    Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        complete: function(results) {
+            const data = results.data.filter(row => row.school_name); // Filter empty rows
+            
+            // Sort by RPI descending
+            data.sort((a, b) => b.rpi - a.rpi);
+
+            document.getElementById('last-updated').innerText = new Date().toLocaleDateString();
+            
+            renderChart(data.slice(0, 10)); // Top 10 for chart
+            renderTable(data);             // All for table
+        }
+    });
+
+    // 2. Render Chart.js
+    function renderChart(topData) {
+        const ctx = document.getElementById('rpiChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: topData.map(d => d.school_name),
+                datasets: [{
+                    label: 'RPI Score',
+                    data: topData.map(d => d.rpi),
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Makes it a horizontal bar chart
+                scales: { x: { beginAtZero: false } }
+            }
+        });
+    }
+
+    // 3. Render Table
+    function renderTable(data) {
+    const tbody = document.querySelector('#data-table tbody');
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        
+        // Add the logic here to turn the URL into an image tag
+        tr.innerHTML = `
+            <td>
+                <img src="${row.logo_url}" 
+                     alt="${row.school_name} logo" 
+                     style="width: 40px; height: auto; border-radius: 4px;">
+            </td>
+            <td>${row.school_name}</td>
+            <td>${row.city}</td>
+            <td>${row.W}-${row.L}</td>
+            <td>${(row.win_pct * 100).toFixed(1)}%</td>
+            <td><strong>${row.rpi.toFixed(4)}</strong></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+</script>
+
+</body>
+</html>
