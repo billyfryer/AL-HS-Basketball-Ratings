@@ -9,7 +9,7 @@
         body { font-family: sans-serif; margin: 20px; background: #f4f7f6; }
         
         .container { 
-            max-width: 1200px; /* Wider container for more columns */
+            max-width: 1200px; 
             margin: auto; 
             background: white; 
             padding: 20px; 
@@ -17,7 +17,6 @@
             box-shadow: 0 2px 15px rgba(0,0,0,0.1); 
         }
 
-        /* Table Wrapper: This allows the table to scroll sideways if it's too wide for the screen */
         .table-responsive {
             overflow-x: auto;
             margin-top: 20px;
@@ -26,58 +25,68 @@
 
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
         
-        /* Fixed Header Styling */
         th { 
             background-color: #ff0000; 
             color: white; 
             padding: 12px; 
             text-align: left; 
-            white-space: nowrap; /* Prevents headers from wrapping to two lines */
+            white-space: nowrap;
+            /* ADDED: Show users they can click the headers */
+            cursor: pointer;
+            user-select: none;
         }
+        
+        /* ADDED: A small hover effect for headers */
+        th:hover { background-color: #cc0000; }
 
         td { 
             padding: 10px; 
             border-bottom: 1px solid #ddd; 
-            white-space: nowrap; /* Keeps data on one line for a cleaner look */
+            white-space: nowrap; 
         }
 
         tr:hover { background-color: #f1f1f1; }
 
         .logo-img { width: 35px; height: 35px; object-fit: contain; }
 
-        /* Tab buttons */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
         .tab-button { 
-            padding: 8px 20px; border: none; background: #ddd; 
-            border-radius: 5px; cursor: pointer; font-weight: bold; 
+            padding: 10px 25px; border: none; background: #ddd; 
+            border-radius: 25px; cursor: pointer; font-weight: bold; 
+            transition: 0.3s;
         }
-        .tab-button.active { background: #007bff; color: white; }
+        .tab-button.active { background: #ff0000; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Alabama High School Basketball Ratings</h1>
+
+    <h1 style="text-align: center;">Alabama High School Basketball RPI</h1>
+
+    <h2>Data From Dragonfly - Minimum 10 Games Inputted (Only Includes In-State Opponents)</h2>
+    <h2>RPI Formula: RPI =  (40% * Win%) + (35% * Opp Win%) + (25% * Opp Opp Win%)</h2>
+
+    <p style="text-align: center; color: #666;">Last Updated: <span id="last-updated"></span></p>
     
     <div class="tabs">
-        <button class="tab-button active" onclick="switchData('mbb_rpi.csv', this)">Men's</button>
-        <button class="tab-button" onclick="switchData('wbb_rpi.csv', this)">Women's</button>
+        <button class="tab-button active" onclick="switchData('mbb_rpi.csv', this)">Men's Basketball</button>
+        <button class="tab-button" onclick="switchData('wbb_rpi.csv', this)">Women's Basketball</button>
     </div>
 
     <div class="table-responsive">
         <table id="data-table">
             <thead>
                 <tr>
-                    <th>Rank</th>
-                    <th>School</th>
-                    <th>City</th>
-                    <th>Mascot</th>
-                    <th>W</th>
-                    <th>L</th>
-                    <th>Win %</th>
-                    <th>Opp Win %</th>
-                    <th>Opp Opp Win %</th>
-                    <th>RPI</th>
+                    <th onclick="sortTable('rank')">Rank ↕</th>
+                    <th onclick="sortTable('school_name')">School ↕</th>
+                    <th onclick="sortTable('city')">City ↕</th>
+                    <th onclick="sortTable('W')">W ↕</th>
+                    <th onclick="sortTable('L')">L ↕</th>
+                    <th onclick="sortTable('win_pct')">Win % ↕</th>
+                    <th onclick="sortTable('opp_win_pct')">Opp Win % ↕</th>
+                    <th onclick="sortTable('opp_opp_win_pct')">Opp Opp Win % ↕</th>
+                    <th onclick="sortTable('rpi')">RPI ↕</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
@@ -86,6 +95,13 @@
 </div>
 
 <script>
+    // Global variables to track state
+    let currentData = [];
+    let currentSortColumn = 'rank';
+    let isAscending = true;
+
+    document.getElementById('last-updated').innerText = new Date().toLocaleDateString();
+
     function switchData(fileName, buttonElement) {
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
         buttonElement.classList.add('active');
@@ -95,47 +111,90 @@
             header: true,
             dynamicTyping: true,
             complete: function(results) {
-                const data = results.data.filter(row => row.school_name);
-                data.sort((a, b) => b.rpi - a.rpi);
-                renderTable(data);
+                // The Cleaner: strip quotes and whitespace from keys
+                currentData = results.data
+                    .filter(row => row.school_name || row['"school_name"'])
+                    .map(row => {
+                        let newRow = {};
+                        for (let key in row) {
+                            let cleanKey = key.replace(/['"]+/g, '').trim();
+                            newRow[cleanKey] = row[key];
+                        }
+                        return newRow;
+                    });
+
+                // Default sort by rank
+                currentSortColumn = 'rank';
+                isAscending = true;
+                currentData.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+
+                renderTable(currentData);
             }
         });
     }
 
+    // NEW FUNCTION: Sorts the data array and re-renders
+    function sortTable(column) {
+        // If clicking the same column, flip the direction. Otherwise, start Ascending.
+        if (currentSortColumn === column) {
+            isAscending = !isAscending;
+        } else {
+            currentSortColumn = column;
+            isAscending = true;
+        }
+
+        currentData.sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+
+            // Handle empty values
+            if (valA === null || valA === undefined) return 1;
+            if (valB === null || valB === undefined) return -1;
+
+            // Compare strings or numbers
+            if (valA < valB) return isAscending ? -1 : 1;
+            if (valA > valB) return isAscending ? 1 : -1;
+            return 0;
+        });
+
+        renderTable(currentData);
+    }
+
     function renderTable(data) {
         const tbody = document.getElementById('table-body');
-        tbody.innerHTML = ''; // Clear existing rows
+        tbody.innerHTML = ''; 
 
-        data.forEach(row => {
+        data.forEach((row, index) => {
             const tr = document.createElement('tr');
-            
-            // We map every CSV column key to a table cell
+            const toPct = (val) => val ? (parseFloat(val) * 100).toFixed(1) + '%' : '0.0%';
+            const displayRank = row.rank || (index + 1);
+
             tr.innerHTML = `
-                <td style="font-weight: bold; color: #666;">${row.rank}</td>
+                <td style="font-weight: bold; color: #444;">${displayRank}</td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${row.logo_url}" 
-                            class="logo-img" 
-                            onerror="this.src='https://via.placeholder.com/35?text=?'">
+                        <img src="${row.logo_url}" class="logo-img" onerror="this.src='https://via.placeholder.com/35?text=?'">
                         <strong>${row.school_name}</strong>
                     </div>
                 </td>
                 <td>${row.city}</td>
-                <td>${row.mascot || '—'}</td>
                 <td>${row.W}</td>
                 <td>${row.L}</td>
-                <td>${(row.win_pct * 100).toFixed(1)}%</td>
-                <td>${(row.opp_win_pct * 100).toFixed(1)}%</td>
-                <td>${(row.opp_opp_win_pct * 100).toFixed(1)}%</td>
-                <td style="font-weight:bold; color:#007bff;">${row.rpi.toFixed(4)}</td>
+                <td>${toPct(row.win_pct)}</td>
+                <td>${toPct(row.opp_win_pct)}</td>
+                <td>${toPct(row.opp_opp_win_pct)}</td>
+                <td style="font-weight:bold; color:#ff0000;">${parseFloat(row.rpi || 0).toFixed(4)}</td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Default load
-    window.onload = () => switchData('mbb_rpi.csv', document.querySelector('.tab-button.active'));
+    window.onload = () => {
+        switchData('mbb_rpi.csv', document.querySelector('.tab-button.active'));
+    };
 </script>
+
+<h2>Website Created by Billy Fryer, Shelby County High School Class of 2019. Roll Shelby/Go Wildcats!</h2>
 
 </body>
 </html>
