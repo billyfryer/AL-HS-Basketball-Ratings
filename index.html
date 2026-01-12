@@ -3,107 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alabama High School Basketball RPI Rankings</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>High School Basketball RPI - Full Data</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 40px; background: #f4f4f9; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        canvas { margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        th { background-color: #007bff; color: white; }
+        body { font-family: sans-serif; margin: 20px; background: #f4f7f6; }
+        
+        .container { 
+            max-width: 1200px; /* Wider container for more columns */
+            margin: auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1); 
+        }
+
+        /* Table Wrapper: This allows the table to scroll sideways if it's too wide for the screen */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid #eee;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        
+        /* Fixed Header Styling */
+        th { 
+            background-color: #007bff; 
+            color: white; 
+            padding: 12px; 
+            text-align: left; 
+            white-space: nowrap; /* Prevents headers from wrapping to two lines */
+        }
+
+        td { 
+            padding: 10px; 
+            border-bottom: 1px solid #ddd; 
+            white-space: nowrap; /* Keeps data on one line for a cleaner look */
+        }
+
         tr:hover { background-color: #f1f1f1; }
+
+        .logo-img { width: 35px; height: 35px; object-fit: contain; }
+
+        /* Tab buttons */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-button { 
+            padding: 8px 20px; border: none; background: #ddd; 
+            border-radius: 5px; cursor: pointer; font-weight: bold; 
+        }
+        .tab-button.active { background: #007bff; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Top 10 Schools by RPI</h1>
-    <p>Last Updated: <span id="last-updated"></span></p>
+    <h1>Alabama High School Basketball Ratings</h1>
     
-    <canvas id="rpiChart"></canvas>
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchData('mbb_rpi.csv', this)">Men's</button>
+        <button class="tab-button" onclick="switchData('wbb_rpi.csv', this)">Women's</button>
+    </div>
 
-    <h2>Full Rankings</h2>
-    <table id="data-table">
-        <thead>
-            <tr>
-                <th>Logo</th> <th>School</th>
-                <th>City</th>
-                <th>W-L</th>
-                <th>Win %</th>
-                <th>RPI</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="table-responsive">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Logo</th>
+                    <th>ID</th>
+                    <th>School Name</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Mascot</th>
+                    <th>Address</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>Win %</th>
+                    <th>Opp Win %</th>
+                    <th>Opp Opp Win %</th>
+                    <th>RPI</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    const csvUrl = 'mbb_rpi.csv';
+    function switchData(fileName, buttonElement) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        buttonElement.classList.add('active');
 
-    // 1. Fetch and Parse CSV
-    Papa.parse(csvUrl, {
-        download: true,
-        header: true,
-        dynamicTyping: true,
-        complete: function(results) {
-            const data = results.data.filter(row => row.school_name); // Filter empty rows
-            
-            // Sort by RPI descending
-            data.sort((a, b) => b.rpi - a.rpi);
-
-            document.getElementById('last-updated').innerText = new Date().toLocaleDateString();
-            
-            renderChart(data.slice(0, 10)); // Top 10 for chart
-            renderTable(data);             // All for table
-        }
-    });
-
-    // 2. Render Chart.js
-    function renderChart(topData) {
-        const ctx = document.getElementById('rpiChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: topData.map(d => d.school_name),
-                datasets: [{
-                    label: 'RPI Score',
-                    data: topData.map(d => d.rpi),
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                indexAxis: 'y', // Makes it a horizontal bar chart
-                scales: { x: { beginAtZero: false } }
+        Papa.parse(fileName, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                const data = results.data.filter(row => row.school_name);
+                data.sort((a, b) => b.rpi - a.rpi);
+                renderTable(data);
             }
         });
     }
 
-    // 3. Render Table
     function renderTable(data) {
-    const tbody = document.querySelector('#data-table tbody');
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        
-        // Add the logic here to turn the URL into an image tag
-        tr.innerHTML = `
-            <td>
-                <img src="${row.logo_url}" 
-                     alt="${row.school_name} logo" 
-                     style="width: 40px; height: auto; border-radius: 4px;">
-            </td>
-            <td>${row.school_name}</td>
-            <td>${row.city}</td>
-            <td>${row.W}-${row.L}</td>
-            <td>${(row.win_pct * 100).toFixed(1)}%</td>
-            <td><strong>${row.rpi.toFixed(4)}</strong></td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            
+            // We map every CSV column key to a table cell
+            tr.innerHTML = `
+                <td><img src="${row.logo_url}" class="logo-img" onerror="this.src='https://via.placeholder.com/35?text=?'"></td>
+                <td>${row.school_id}</td>
+                <td><strong>${row.school_name}</strong></td>
+                <td>${row.city}</td>
+                <td>${row.state}</td>
+                <td>${row.mascot || '—'}</td>
+                <td>${row.address || '—'}</td>
+                <td>${row.W}</td>
+                <td>${row.L}</td>
+                <td>${(row.win_pct * 100).toFixed(1)}%</td>
+                <td>${(row.opp_win_pct * 100).toFixed(1)}%</td>
+                <td>${(row.opp_opp_win_pct * 100).toFixed(1)}%</td>
+                <td style="font-weight:bold; color:#007bff;">${row.rpi.toFixed(4)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Default load
+    window.onload = () => switchData('mbb_rpi.csv', document.querySelector('.tab-button.active'));
 </script>
 
 </body>
