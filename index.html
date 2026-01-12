@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High School Basketball RPI - Full Data</title>
+    <title>Alabama High School Basketball Ratings</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         body { font-family: sans-serif; margin: 20px; background: #f4f7f6; }
@@ -104,14 +104,14 @@
 
     function renderTable(data) {
         const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; // Clear existing rows
 
         data.forEach(row => {
             const tr = document.createElement('tr');
             
             // We map every CSV column key to a table cell
             tr.innerHTML = `
-                <td><strong>${row.rank}</strong></td>
+                <td style="font-weight: bold; color: #666;">${row.rank}</td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <img src="${row.logo_url}" 
