@@ -30,9 +30,11 @@ mbb_rpi <- calculate_rpi(current_year_mbb_schedule) %>%
   # Filter and arrange rows
   # Minimum 10 games played
   filter(!is.na(rpi) & (W + L >= 10)) %>% 
-  arrange(desc(rpi))
-  
-
+  arrange(desc(rpi)) %>% 
+  # Mutate on a rank column
+  mutate(rank = rank(-rpi, ties.method = "min")) %>% 
+  # Arrange Columns
+  select(rank, everything())
 
 # Scrape WBB ----
 current_year_wbb_schedule <- scrape_scoreboard("WBB_Varsity", year = season)
@@ -43,7 +45,11 @@ wbb_rpi <- calculate_rpi(current_year_wbb_schedule) %>%
             by = join_by("school_id")) %>% 
   # Filter and arrange rows
   filter(!is.na(rpi) & (W + L >= 10)) %>% 
-  arrange(desc(rpi))
+  arrange(desc(rpi)) %>% 
+  # Mutate on a rank column
+  mutate(rank = rank(-rpi, ties.method = "min")) %>% 
+  # Arrange Columns
+  select(rank, everything())
 
 # Sample Code for GT Tables----
 
