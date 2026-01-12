@@ -68,8 +68,8 @@
         <table id="data-table">
             <thead>
                 <tr>
-                    <th>Logo</th>
-                    <th>School Name</th>
+                    <th>Rank</th>
+                    <th>School</th>
                     <th>City</th>
                     <th>Mascot</th>
                     <th>W</th>
@@ -111,8 +111,15 @@
             
             // We map every CSV column key to a table cell
             tr.innerHTML = `
-                <td><img src="${row.logo_url}" class="logo-img" onerror="this.src='https://via.placeholder.com/35?text=?'"></td>
-                <td><strong>${row.school_name}</strong></td>
+                <td><strong>${row.rank}</strong></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="${row.logo_url}" 
+                            class="logo-img" 
+                            onerror="this.src='https://via.placeholder.com/35?text=?'">
+                        <strong>${row.school_name}</strong>
+                    </div>
+                </td>
                 <td>${row.city}</td>
                 <td>${row.mascot || '—'}</td>
                 <td>${row.W}</td>
