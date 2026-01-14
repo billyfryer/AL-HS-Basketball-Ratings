@@ -2,29 +2,32 @@ name: Daily Data Update
 
 on:
   schedule:
-    - cron: '0 10 * * *' # Runs at 5:00 AM EST every day
-  workflow_dispatch:      # Allows you to run it manually for testing
+    - cron: '0 10 * * *' 
+  workflow_dispatch:      
 
 jobs:
   autoscrape:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }} # Helps with package download limits
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          use-public-rspm: true # Use pre-compiled binaries (much faster!)
+          r-version: 'release'
+          use-public-rspm: true # Vital: Uses pre-compiled Linux binaries
 
-      # This step automatically installs the Linux libraries needed for tidyverse
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
-
-      - name: Install R Packages
-        run: |
-          Rscript -e 'install.packages(c("tidyverse", "janitor", "jsonlite"), type = "binary")'
+      # This is the "Magic Step" that replaces manual install.packages
+      - name: Install R Dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::tidyverse
+            any::janitor
+            any::jsonlite
 
       - name: Run Scraper
         run: Rscript Daily-Execute-File.R
@@ -33,7 +36,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "actions@github.com"
-          # 'git add *.csv' ensures both mbb and wbb files are updated
           git add *.csv
           git commit -m "Daily data update: $(date)" || echo "No changes to commit"
           git push
