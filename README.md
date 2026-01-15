@@ -2,4 +2,6 @@
 
 https://billyfryer.github.io/AL-HS-Basketball-Ratings/
 
-Still a work in progress... Working on getting the data to update every day
+Still a work in progress...
+
+Something is wrong with my scraper. I'm missing games
